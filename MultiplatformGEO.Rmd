@@ -8,7 +8,17 @@ output:
     highlight: pygments
 ---
 
+## Introduction
+
+This is just a little exercise showing the power of dplyr for data 
+munging in the context of a realistic biological relational database.
+
 ## Get metadata sqlite file
+
+The first step is to load the GEOmetadb library which provides
+the very light infrastructure for the separate SQLite database.  After
+loading the library, retrieve the SQLite database file--updated weekly--for
+local queries against the NCBI GEO metadata.
 
 ```{r echo=FALSE,result="hide"}
 library(knitr)
@@ -41,6 +51,12 @@ tgpl = tbl(gmdb,'gpl')
 ```
 
 ## Queries of interest
+
+For the purposes of this little exercise, we do three sets of queries:
+
+* A count of the rows in the three main "data" tables
+* A quick survey of multiplatform GEO Series
+* A plot of trends over time of the most common experiment types
 
 ### Simple table summaries
 

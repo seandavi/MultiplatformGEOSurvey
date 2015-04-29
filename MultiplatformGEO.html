@@ -71,8 +71,13 @@ code > span.er { color: #ff0000; font-weight: bold; }
 </div>
 
 
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<p>This is just a little exercise showing the power of dplyr for data munging in the context of a realistic biological relational database.</p>
+</div>
 <div id="get-metadata-sqlite-file" class="section level2">
 <h2>Get metadata sqlite file</h2>
+<p>The first step is to load the GEOmetadb library which provides the very light infrastructure for the separate SQLite database. After loading the library, retrieve the SQLite database file–updated weekly–for local queries against the NCBI GEO metadata.</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="kw">library</span>(GEOmetadb)
 sfile =<span class="st"> 'GEOmetadb.sqlite'</span>
 if(!<span class="kw">file.exists</span>(sfile)) {
@@ -101,6 +106,12 @@ tgpl =<span class="st"> </span><span class="kw">tbl</span>(gmdb,<span class="st"
 </div>
 <div id="queries-of-interest" class="section level2">
 <h2>Queries of interest</h2>
+<p>For the purposes of this little exercise, we do three sets of queries:</p>
+<ul>
+<li>A count of the rows in the three main “data” tables</li>
+<li>A quick survey of multiplatform GEO Series</li>
+<li>A plot of trends over time of the most common experiment types</li>
+</ul>
 <div id="simple-table-summaries" class="section level3">
 <h3>Simple table summaries</h3>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">tablestats =<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">entity=</span><span class="kw">c</span>(<span class="st">'Series'</span>,<span class="st">'Samples'</span>,<span class="st">'Platforms'</span>),
