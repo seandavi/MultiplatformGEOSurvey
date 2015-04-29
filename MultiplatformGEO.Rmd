@@ -140,9 +140,7 @@ gse_type_year = select(tgse,gse,type,year=submission_date) %>%
   filter(year<2015) %>%
   transform(type = strsplit(type,';\\t')) %>%
   unnest(type) %>% 
-  right_join(type_count[1:6,'type']) %>%
-  group_by(type,year) %>%
-  summarize(submissions=n())
+  right_join(type_count[1:6,'type'])
 ```
 
 The following plot shows submissions per year (not cumulative number of
@@ -152,12 +150,35 @@ exceeds sequencing--note y-scale is log10.
 
 ```{r submissionsPlot}
 library(ggplot2)
-ggplot(gse_type_year,aes(x=year,y=submissions,group=type,color=type)) +
+group_by(gse_type_year,type,year) %>%
+  summarize(submissions=n()) %>%
+  ggplot(aes(x=year,y=submissions,group=type,color=type)) +
   geom_line() + 
   scale_y_log10() + 
   theme(legend.position="bottom") + 
   guides(colour = guide_legend(nrow = 6))
 ```
+
+The next plot limits the submissions to those with more than one data type.
+
+```{r submissionsPlotMultiplatformOnly}
+# some really fun dplyr foo!
+library(zoo)
+select(gse_type,gse) %>% 
+  group_by(gse) %>%
+  summarize(datatypes=n()) %>%
+  filter(datatypes>1) %>%
+  left_join(gse_type_year) %>%
+  transform(year=as.Date(as.yearmon(year))) %>%
+  group_by(type,year) %>%
+  summarize(submissions=n()) %>%
+  ggplot(aes(x=year,y=submissions,group=type,color=type)) +
+    geom_line() + 
+    scale_y_log10() + 
+    theme(legend.position="bottom") + 
+    guides(colour = guide_legend(nrow = 6))
+```
+
 
 ## sessionInfo()
 
