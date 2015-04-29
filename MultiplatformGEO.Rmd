@@ -1,0 +1,150 @@
+---
+title: "NCBI GEO Metadata Survey"
+author: "Sean Davis"
+date: "April 28, 2015"
+output: 
+  html_document:
+    theme: readable
+    highlight: pygments
+---
+
+## Get metadata sqlite file
+
+```{r echo=FALSE,result="hide"}
+library(knitr)
+library(pander)
+opts_chunk$set(warning=FALSE,message=FALSE,fig.width=8,fig.height=8)
+```
+
+
+```{r getsqlite}
+library(GEOmetadb)
+sfile = 'GEOmetadb.sqlite'
+if(!file.exists(sfile)) {
+  sfile = getSQLiteFile() 
+}
+```
+
+## Set up dplyr stuff....
+
+Just for fun, instead of using SQL queries, we can rely on dplyr to do the 
+SQL for us.
+
+```{r multiplatform}
+library(dplyr)
+gmdb = src_sqlite(sfile)
+# List available tables in the database
+src_tbls(gmdb)
+tgse = tbl(gmdb,'gse')
+tgsm = tbl(gmdb,'gsm')
+tgpl = tbl(gmdb,'gpl')
+```
+
+## Queries of interest
+
+### Simple table summaries
+
+```{r results='markup'}
+tablestats = data.frame(entity=c('Series','Samples','Platforms'),
+                        Count=c(nrow(tgse),nrow(tgsm),nrow(tgpl)))
+pander(tablestats,justify=c('left','right'))
+```
+
+### Multiplatform datasets by gpl
+
+One way of measuring multiplatform GEO Series in GEO is to map the GSE
+identifiers to their associated GPL identifiers.  This probably overestimates
+the actual complexity of the data, as some GEO series map to multiple arrays
+of the same technology.  For example, there is a GEO Series, GSE1097, that
+has 153 platforms, but this was a set of whole-genome tiling arrays.
+
+```{r multiplatformGPL}
+tgse_gpl = tbl(gmdb,'gse_gpl')
+gse_gpl_count = select(tgse_gpl,gse) %>% 
+  group_by(gse) %>%
+  summarise(count=n()) %>%
+  filter(count>1) %>%
+  collect()
+# and make a cut base on number of platforms associated with a GSE
+cut_count = cut(gse_gpl_count$count,
+                breaks=c(2,3,5,10,20,max(gse_gpl_count$count)))
+table(cut_count)
+```
+
+And a small barplot with the binned number of GPLs per GSE:
+
+```{r multiplatformGPLPlot}
+barplot(table(cut_count),
+        main="GEO Series by Number of GEO Platforms",
+        sub="Includes only GEO Series with more than one platform")
+```
+
+### Multiplatform based on assay type
+
+Another way to quantify "multiplatform" is to look at the different assay 
+types in a GSE.  This may underestimate the number somewhat, but it is 
+probably closer to what we want to capture.  The `type` column in the GSE
+table includes a semicolon-separated list of experiment types. While perhaps
+not a perfect list, it at least allows us to quantify the number of 
+experiments of each type. The number of each `type` is given in the next table.
+
+```{r GSETypes}
+library(tidyr)
+gse_type = select(tgse,gse,type) %>%
+  transform(type = strsplit(type,';\\t')) %>%
+  unnest(type) 
+type_count = select(gse_type,type) %>%
+  group_by(type) %>%
+  summarize(count=n()) %>% 
+  arrange(desc(count))
+pander(type_count,justify=c('left','right'))
+```
+
+We can summarize the number of different types per GEO Series.  The results are given in the next table.
+
+```{r multiplatformByGSEType}
+gse_by_type_count = select(gse_type,gse) %>%
+  group_by(gse) %>%
+  summarize(NumberOfDataTypes=n()) %>%
+  group_by(NumberOfDataTypes) %>% 
+  summarize(NumberOfGEOSeries=n())
+pander(gse_by_type_count,justify=c('right','right'))
+```
+
+## Data growth over time
+
+I have summarized the data by profiling type and year of submission.  To
+keep the data clean, I have included only the 6 most common GSE types
+for the plot.  Feel free to adjust.
+
+```{r gseByDateAndType}
+library(lubridate)
+gse_type_year = select(tgse,gse,type,year=submission_date) %>%
+  transform(year=year(as.Date(year))) %>%
+  filter(year<2015) %>%
+  transform(type = strsplit(type,';\\t')) %>%
+  unnest(type) %>% 
+  right_join(type_count[1:6,'type']) %>%
+  group_by(type,year) %>%
+  summarize(submissions=n())
+```
+
+The following plot shows submissions per year (not cumulative number of
+submissions) cut off at 2014. There are clearly trends toward sequencing
+over microarrays, but microarray expression profiling still greatly 
+exceeds sequencing--note y-scale is log10.
+
+```{r submissionsPlot}
+library(ggplot2)
+ggplot(gse_type_year,aes(x=year,y=submissions,group=type,color=type)) +
+  geom_line() + 
+  scale_y_log10() + 
+  theme(legend.position="bottom") + 
+  guides(colour = guide_legend(nrow = 6))
+```
+
+## sessionInfo()
+
+```{r sessionInfo}
+sessionInfo()
+```
