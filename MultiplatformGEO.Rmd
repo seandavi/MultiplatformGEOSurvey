@@ -2,10 +2,11 @@
 title: "NCBI GEO Metadata Survey"
 author: "Sean Davis"
 date: "April 28, 2015"
-output: 
+output:
+  pdf_document: default
   html_document:
-    theme: readable
     highlight: pygments
+    theme: readable
 ---
 
 ## Introduction
@@ -23,7 +24,7 @@ local queries against the NCBI GEO metadata.
 ```{r echo=FALSE,result="hide"}
 library(knitr)
 library(pander)
-opts_chunk$set(warning=FALSE,message=FALSE,fig.width=8,fig.height=8)
+opts_chunk$set(warning=FALSE,message=FALSE,cache=TRUE,fig.width=8,fig.height=8)
 ```
 
 
@@ -175,7 +176,12 @@ select(gse_type,gse) %>%
   ggplot(aes(x=year,y=submissions,group=type,color=type)) +
     geom_line() + 
     scale_y_log10() + 
-    theme(legend.position="bottom") + 
+    theme(legend.position="bottom", 
+            axis.text=element_text(size=rel(1.5)), 
+            axis.title=element_text(size=rel(1.5)), 
+            legend.text=element_text(size=rel(1.1))) +
+    xlab("Year") + ylab("Number of Submissions") +
+    scale_fill_discrete(name  = "Assay Type") +
     guides(colour = guide_legend(nrow = 6))
 ```
 
