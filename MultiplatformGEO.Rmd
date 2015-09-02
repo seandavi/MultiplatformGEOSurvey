@@ -165,7 +165,7 @@ The next plot limits the submissions to those with more than one data type.
 ```{r submissionsPlotMultiplatformOnly}
 # some really fun dplyr foo!
 library(zoo)
-pdf('abc.pdf',width=8,height=8)
+pdf('multiplatform.pdf',width=8,height=8)
 select(gse_type,gse) %>% 
   group_by(gse) %>%
   summarize(datatypes=n()) %>%
@@ -175,7 +175,6 @@ select(gse_type,gse) %>%
   group_by(type,year) %>%
   summarize(submissions=n()) %>%
   ggplot(aes(x=year,y=submissions,group=type)) +
-    guides(guide_legend(nrow = 6)) +
     geom_line() +
     scale_y_log10() + 
     theme(legend.position="bottom", 
@@ -183,9 +182,8 @@ select(gse_type,gse) %>%
             axis.title=element_text(size=rel(1.5)), 
             legend.text=element_text(size=rel(1.1))) +
     xlab("Year") + ylab("Number of Submissions") +
-      theme_bw() +
-    geom_point(aes(shape=type),size=2.5) 
-
+    geom_point(aes(shape=type),size=2.5) +
+      guides(shape=guide_legend(nrow = 6)) 
 dev.off()
 ```
 
