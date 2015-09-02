@@ -165,7 +165,6 @@ The next plot limits the submissions to those with more than one data type.
 ```{r submissionsPlotMultiplatformOnly}
 # some really fun dplyr foo!
 library(zoo)
-pdf('multiplatform.pdf',width=8,height=8)
 select(gse_type,gse) %>% 
   group_by(gse) %>%
   summarize(datatypes=n()) %>%
@@ -184,7 +183,6 @@ select(gse_type,gse) %>%
     xlab("Year") + ylab("Number of Submissions") +
     geom_point(aes(shape=type),size=2.5) +
       guides(shape=guide_legend(nrow = 6)) 
-dev.off()
 ```
 
 
